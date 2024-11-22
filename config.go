@@ -30,8 +30,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -402,12 +400,4 @@ func toSnakeCase(x string) string {
 	}
 
 	return b.String()
-}
-
-func EnsureSet(vals ...string) {
-	for _, v := range vals {
-		if _, found := os.LookupEnv(v); !found {
-			log.Fatalf("'%v' not set in .env or environment", v)
-		}
-	}
 }
