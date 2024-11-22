@@ -86,17 +86,11 @@ func (l *lexer) error(err error) stateFn {
 
 type stateFn func(l *lexer) stateFn
 
-// Parse parses a configuration file at the given path into a `map` containing
-// each key-value pair given in the file.
-func Parse(path string) (map[string]string, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error parsing config file '%v': %w", path, err)
-	}
-
+// Parse parses a configuration file from the given reader into a `map`
+// containing each key-value pair given in the file.
+func Parse(path string, r io.Reader) (map[string]string, error) {
 	result := map[string]string{}
-	s := bufio.NewScanner(f)
+	s := bufio.NewScanner(r)
 	lineNo := 1
 	for ; s.Scan(); lineNo += 1 {
 		text := strings.TrimSpace(s.Text())
@@ -255,8 +249,8 @@ const (
 )
 
 // Read parses a configuration file at the given path into a struct.
-func Read(path string, obj any) error {
-	vals, err := Parse(path)
+func Read(path string, r io.Reader, obj any) error {
+	vals, err := Parse(path, r)
 	if err != nil {
 		return err
 	}
@@ -265,10 +259,10 @@ func Read(path string, obj any) error {
 	if v.Kind() != reflect.Pointer || v.IsNil() {
 		return ErrInvalid
 	}
-	if v.Elem().Kind() != reflect.Struct {
+	v = reflect.Indirect(v)
+	if v.Kind() != reflect.Struct {
 		return ErrInvalid
 	}
-	v = reflect.Indirect(v)
 
 	numFields := v.NumField()
 	for i := 0; i < numFields; i += 1 {
